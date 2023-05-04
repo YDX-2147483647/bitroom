@@ -1,5 +1,9 @@
 # 🚩🏠 bitroom (Book an Incongruent Topological Room Or be Out of Mind)
 
+[![PyPI](https://img.shields.io/pypi/v/bitroom?label=PyPI&logo=PyPI&logoColor=white)](https://pypi.org/project/bitroom/)
+[![Source GitHub](https://img.shields.io/badge/Source-GitHub-lightgray?logo=github)](https://github.com/YDX-2147483647/bitroom/)
+[![Mirror Gitee](https://img.shields.io/badge/Mirror-Gitee-red?logo=gitee)](https://gitee.com/YDX-2147483647/bitroom/)
+
 BIT 场地预约查询接口。
 
 ## 💥 源起
