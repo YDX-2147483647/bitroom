@@ -1,6 +1,6 @@
 [project]
 name = "bitroom"
-version = "0.1.1"
+version = "0.1.2"
 description = "BIT 场地预约查询接口（bitroom）"
 authors = [
     {name = "Y.D.X.", email = "73375426+YDX-2147483647@users.noreply.github.com"},
@@ -15,6 +15,24 @@ dependencies = [
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+    "Topic :: Home Automation",
+    "Topic :: Utilities",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/YDX-2147483647/bitroom"
+Repository = "https://github.com/YDX-2147483647/bitroom"
+"Bug Tracker" = "https://github.com/YDX-2147483647/bitroom/issues"
 
 [project.scripts]
 bitroom = "bitroom.cli:cli"
