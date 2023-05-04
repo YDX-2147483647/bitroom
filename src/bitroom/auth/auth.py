@@ -13,7 +13,7 @@ from execjs import compile
 from .encrypt_js import encrypt_js
 
 if TYPE_CHECKING:
-    from requests import Session
+    from httpx import Client
 
 
 def encrypt(password: str, salt: str) -> str:
@@ -22,7 +22,7 @@ def encrypt(password: str, salt: str) -> str:
     return context.call("encryptPassword", password, salt)
 
 
-def auth(session: Session, username: str, password: str) -> None:
+def auth(client: Client, username: str, password: str) -> None:
     """登录账号
 
     登录失败则抛出异常。
@@ -30,12 +30,12 @@ def auth(session: Session, username: str, password: str) -> None:
     # 例子
 
     ```
-    from requests import Session
+    from httpx import Client
 
     from auth import auth
 
-    session = Session()
-    auth(session, username="1120771210", password="cyberpunk")
+    client = Client()
+    auth(client, username="1120771210", password="cyberpunk")
     ```
     """
 
@@ -50,7 +50,7 @@ def auth(session: Session, username: str, password: str) -> None:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
         "Referer": "https://login.bit.edu.cn/authserver/login",
     }
-    get_login = session.get(login_url)
+    get_login = client.get(login_url)
     get_login.encoding = "utf-8"
     salt = re.search('id="pwdEncryptSalt" value="(.*?)"', get_login.text).group(1)
     execution = re.search('name="execution" value="(.*?)"', get_login.text).group(1)
@@ -66,10 +66,10 @@ def auth(session: Session, username: str, password: str) -> None:
         "execution": execution,
     }
 
-    res = session.post(url=login_url, headers=headers, data=personal_info)
+    res = client.post(url=login_url, headers=headers, data=personal_info)
     res.encoding = "utf-8"
 
-    if res.status_code != 200 or "二维码扫码登录" in res.text:
+    if res.is_success or "二维码扫码登录" in res.text:
         # 登录失败了，检查原因
 
         match = re.search(

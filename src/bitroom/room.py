@@ -5,32 +5,32 @@ from json import dumps
 from math import ceil
 from typing import TYPE_CHECKING, TypedDict
 
-from requests.utils import dict_from_cookiejar
 from rich.progress import track
 
 if TYPE_CHECKING:
     from typing import Generator
 
-    from requests import Response, Session
+    from httpx import Client, Response
 
 API_BASE = "http://stu.bit.edu.cn"
 
 
-def prepare_headers(session: Session) -> None:
+def prepare_headers(client: Client) -> None:
     """准备请求头
 
     设置 cookie 等。
     """
 
-    session.get(
-        f"{API_BASE}/xsfw/sys/swpubapp/indexmenu/getAppConfig.do?appId=4974886768205231&appName=cdyyapp"
+    # Get cookie
+    res = client.get(
+        f"{API_BASE}/xsfw/sys/swpubapp/indexmenu/getAppConfig.do?appId=4974886768205231&appName=cdyyapp",
+        follow_redirects=True,
     )
-    cookie = dict_from_cookiejar(session.cookies)
+    res.raise_for_status()
 
-    session.headers.update(
+    client.headers.update(
         {
             "Referer": f"{API_BASE}/xsfw/sys/cdyyapp/*default/index.do",
-            "Cookie": "; ".join(f"{key}={value}" for key, value in cookie.items()),
         }
     )
 
@@ -64,18 +64,22 @@ class Booking(TypedDict):
 class RoomAPI:
     """场地预约 API 包装"""
 
-    _session: Session
+    _client: Client
 
-    def __init__(self, session: Session) -> None:
+    def __init__(self, client: Client) -> None:
         """
-        :param session: 已登录的 session，用于后续所有网络请求（会被修改）
+        :param client: 已登录的 client，用于后续所有网络请求（会被修改）
         """
 
-        prepare_headers(session)
-        self._session = session
+        prepare_headers(client)
+        self._client = client
 
-    def _post(self, url_path: str, *args, **kwargs) -> Response:
-        return self._session.post(f"{API_BASE}{url_path}", *args, **kwargs)
+    def _post(self, url_path: str, **kwargs) -> Response:
+        return self._client.post(
+            f"{API_BASE}{url_path}",
+            timeout=50,  # Yes, it's really slow…
+            **kwargs,
+        )
 
     def _get_data(self, date: datetime.date, page: int, rooms_per_page: int) -> dict:
         """
@@ -87,7 +91,7 @@ class RoomAPI:
 
         res = self._post(
             "/xsfw/sys/cdyyapp/modules/CdyyApplyController/getSiteInfo.do",
-            {
+            data={
                 "data": dumps(
                     {
                         # 预约日期
@@ -97,6 +101,7 @@ class RoomAPI:
                     }
                 )
             },
+            follow_redirects=True,
         )
         res.raise_for_status()
         json = res.json()

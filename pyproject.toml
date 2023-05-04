@@ -6,9 +6,9 @@ authors = [
     {name = "Y.D.X.", email = "73375426+YDX-2147483647@users.noreply.github.com"},
 ]
 dependencies = [
-    "requests>=2.29.0",
     "PyExecJS>=1.5.1",
     "rich>=13.3.5",
+    "httpx>=0.24.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

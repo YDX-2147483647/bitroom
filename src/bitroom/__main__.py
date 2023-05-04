@@ -1,15 +1,16 @@
 from datetime import date
 from time import monotonic
 
-from requests import Session
+from httpx import Client
 from rich.pretty import pprint
 
 from .auth import auth
 from .room import RoomAPI
 
-session = Session()
-auth(session, input("username >> "), input("password >> "))
-api = RoomAPI(session)
+client = Client()
+auth(client, input("username >> "), input("password >> "))
+api = RoomAPI(client)
+
 
 for n in (2, 5, 10, 20, 50):
     t_start = monotonic()
