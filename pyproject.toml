@@ -7,7 +7,6 @@ authors = [
 ]
 dependencies = [
     "PyExecJS>=1.5.1",
-    "rich>=13.3.5",
     "httpx>=0.24.0",
 ]
 requires-python = ">=3.10"

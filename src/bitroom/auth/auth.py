@@ -13,7 +13,7 @@ from execjs import compile
 from .encrypt_js import encrypt_js
 
 if TYPE_CHECKING:
-    from httpx import Client
+    from httpx import AsyncClient
 
 
 def encrypt(password: str, salt: str) -> str:
@@ -22,7 +22,7 @@ def encrypt(password: str, salt: str) -> str:
     return context.call("encryptPassword", password, salt)
 
 
-def auth(client: Client, username: str, password: str) -> None:
+async def auth(client: AsyncClient, username: str, password: str) -> None:
     """登录账号
 
     登录失败则抛出异常。
@@ -30,12 +30,12 @@ def auth(client: Client, username: str, password: str) -> None:
     # 例子
 
     ```
-    from httpx import Client
+    from httpx import AsyncClient
 
     from auth import auth
 
-    client = Client()
-    auth(client, username="1120771210", password="cyberpunk")
+    async with AsyncClient() as client:
+        await auth(client, username="1120771210", password="cyberpunk")
     ```
     """
 
@@ -50,7 +50,7 @@ def auth(client: Client, username: str, password: str) -> None:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.198 Safari/537.36",
         "Referer": "https://login.bit.edu.cn/authserver/login",
     }
-    get_login = client.get(login_url)
+    get_login = await client.get(login_url)
     get_login.encoding = "utf-8"
     salt = re.search('id="pwdEncryptSalt" value="(.*?)"', get_login.text).group(1)
     execution = re.search('name="execution" value="(.*?)"', get_login.text).group(1)
@@ -66,7 +66,7 @@ def auth(client: Client, username: str, password: str) -> None:
         "execution": execution,
     }
 
-    res = client.post(url=login_url, headers=headers, data=personal_info)
+    res = await client.post(url=login_url, headers=headers, data=personal_info)
     res.encoding = "utf-8"
 
     if res.is_success or "二维码扫码登录" in res.text:

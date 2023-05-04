@@ -1,28 +1,28 @@
 from __future__ import annotations
 
 import datetime
+from asyncio import gather
+from itertools import chain
 from json import dumps
 from math import ceil
 from typing import TYPE_CHECKING, TypedDict
 
-from rich.progress import track
-
 if TYPE_CHECKING:
     from typing import Generator
 
-    from httpx import Client, Response
+    from httpx import AsyncClient, Response
 
 API_BASE = "http://stu.bit.edu.cn"
 
 
-def prepare_headers(client: Client) -> None:
+async def prepare_headers(client: AsyncClient) -> None:
     """准备请求头
 
     设置 cookie 等。
     """
 
     # Get cookie
-    res = client.get(
+    res = await client.get(
         f"{API_BASE}/xsfw/sys/swpubapp/indexmenu/getAppConfig.do?appId=4974886768205231&appName=cdyyapp",
         follow_redirects=True,
     )
@@ -62,34 +62,53 @@ class Booking(TypedDict):
 
 
 class RoomAPI:
-    """场地预约 API 包装"""
+    """场地预约 API 包装
 
-    _client: Client
+    ## 例子
 
-    def __init__(self, client: Client) -> None:
+    ```
+    from datetime import date
+
+    api = await RoomAPI.build(client)
+    bookings = await api.get_bookings(date.today())
+    ```
+    """
+
+    _client: AsyncClient
+
+    @classmethod
+    async def build(cls, client: AsyncClient) -> RoomAPI:
         """
         :param client: 已登录的 client，用于后续所有网络请求（会被修改）
         """
 
-        prepare_headers(client)
+        await prepare_headers(client)
+        return RoomAPI(client)
+
+    def __init__(self, client: AsyncClient) -> None:
+        """
+        请使用`build`。
+        """
+
         self._client = client
 
-    def _post(self, url_path: str, **kwargs) -> Response:
-        return self._client.post(
+    async def _post(self, url_path: str, **kwargs) -> Response:
+        return await self._client.post(
             f"{API_BASE}{url_path}",
-            timeout=50,  # Yes, it's really slow…
             **kwargs,
         )
 
-    def _get_data(self, date: datetime.date, page: int, rooms_per_page: int) -> dict:
-        """
+    async def _fetch_data(
+        self, date: datetime.date, page: int, *, rooms_per_page: int
+    ) -> dict:
+        """Get a page of data
         :param date: 日期
         :param page: 第几页，从0开始
         :param rooms_per_page: 每页房间数量
         :return: 相邻一周（周一–周日）的预约情况
         """
 
-        res = self._post(
+        res = await self._post(
             "/xsfw/sys/cdyyapp/modules/CdyyApplyController/getSiteInfo.do",
             data={
                 "data": dumps(
@@ -101,6 +120,7 @@ class RoomAPI:
                     }
                 )
             },
+            timeout=max(15, 10 * rooms_per_page),  # Yes, it's really slow…
             follow_redirects=True,
         )
         res.raise_for_status()
@@ -109,19 +129,70 @@ class RoomAPI:
 
         return json["data"]
 
-    def get_bookings(
-        self, date: datetime.date, *, rooms_per_page=10
+    def _parse_data(
+        self, data: dict, *, dates: list[datetime.date]
     ) -> Generator[Booking, None, None]:
+        """Parse a page of data to bookings
+        :param data: API 的原始响应
+        :param dates: 涉及的日期，周一–周日
+        """
+
+        # 每个房间
+        for room in data["siteInfoList"]:
+            # 每一天
+            for date_status in room["currentWeekData"]:
+                if date_status["isLock"] or date_status["applyTime"] == "":
+                    continue
+
+                # 每个时段
+                for time_range in date_status["applyTime"].split(","):
+                    yield Booking(
+                        room_name=room["CDMC"],
+                        room_id=room["CDDM"],
+                        time=tuple(
+                            datetime.datetime.combine(dates[date_status["XQJ"] - 1], t)
+                            for t in parse_time_range(time_range)
+                        ),
+                    )
+
+    async def _fetch_bookings_page(
+        self,
+        page: int,
+        *,
+        date: datetime.date,
+        rooms_per_page: int,
+        dates: list[datetime.date],
+    ) -> list[Booking]:
+        """Fetch a page of bookings
+
+        :param date: 日期
+        :param page: 第几页，从0开始
+        :param rooms_per_page: 每页房间数量
+        :param dates: 涉及的日期，周一–周日
+        """
+
+        data = await self._fetch_data(date, page=page, rooms_per_page=rooms_per_page)
+        return list(self._parse_data(data, dates=dates))
+
+    async def fetch_bookings(
+        self, date: datetime.date, *, rooms_per_page=3
+    ) -> list[Booking]:
         """获取可预约的时空区间
 
         :param date: 日期
         :param rooms_per_page: 访问 API 时每页房间数量
         :yield: 相邻一周（周一–周日）可预约的时空区间
+
+        # 玄学
+
+        响应时间与 rooms_per_page 近似线性正相关。
+
+        若不并发，rooms_per_page=10 时单位时间获取的房间最多。
         """
 
         # 首先试探，取得基本数据
         # 只获取一项响应更快
-        sniff_data = self._get_data(date, page=0, rooms_per_page=1)
+        sniff_data = await self._fetch_data(date, page=0, rooms_per_page=1)
 
         dates = [date.fromisoformat(it["WEEKDATE"]) for it in sniff_data["weekList"]]
         """此次查询涉及的日期，周一–周日"""
@@ -130,26 +201,15 @@ class RoomAPI:
         n_pages = ceil(n_rooms / rooms_per_page)
 
         # 然后获取所有数据
-        # 每一页
-        for p in track(range(n_pages), description="Fetching data…"):
-            data = self._get_data(date, page=p, rooms_per_page=rooms_per_page)
+        # 每一页的结果
+        bookings_set = await gather(
+            *(
+                self._fetch_bookings_page(
+                    page=p, date=date, rooms_per_page=rooms_per_page, dates=dates
+                )
+                for p in range(n_pages)
+            )
+        )
 
-            # 每个房间
-            for room in data["siteInfoList"]:
-                # 每一天
-                for date_status in room["currentWeekData"]:
-                    if date_status["isLock"] or date_status["applyTime"] == "":
-                        continue
-
-                    # 每个时段
-                    for time_range in date_status["applyTime"].split(","):
-                        yield Booking(
-                            room_name=room["CDMC"],
-                            room_id=room["CDDM"],
-                            time=tuple(
-                                datetime.datetime.combine(
-                                    dates[date_status["XQJ"] - 1], t
-                                )
-                                for t in parse_time_range(time_range)
-                            ),
-                        )
+        # Flatten
+        return list(chain.from_iterable(bookings_set))
