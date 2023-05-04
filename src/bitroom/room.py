@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import datetime
 from asyncio import gather
+from dataclasses import asdict, dataclass
 from itertools import chain
 from json import dumps
-from dataclasses import dataclass
 from math import ceil
 from typing import TYPE_CHECKING
 
@@ -72,11 +72,32 @@ class Booking:
 
     room_name: str
     room_id: str
-    time: tuple[datetime.datetime, datetime.datetime]
-    """(开始时刻, 结束时刻)"""
+    t_start: datetime.datetime
+    """开始时刻"""
+    t_end: datetime.datetime
+    """结束时刻"""
 
     def __str__(self) -> str:
-        return f"<Booking [{self.room_name}] {format_datetime_range(self.time)}>"
+        return (
+            f"<Booking [{self.room_name}] "
+            f"{format_datetime_range((self.t_start,self.t_end))}>"
+        )
+
+    def as_dict(self) -> dict[str, str]:
+        raw = asdict(self)
+        for k, v in raw.items():
+            if isinstance(v, datetime.datetime):
+                raw[k] = v.isoformat()
+
+        return raw
+
+    @classmethod
+    def from_dict(cls, raw: dict[str, str | datetime.datetime]) -> Booking:
+        for k, v in raw.items():
+            if k.startswith("t_") and isinstance(v, str):
+                raw[k] = datetime.datetime.fromisoformat(v)
+
+        return Booking(**raw)
 
 
 class RoomAPI:
@@ -164,13 +185,15 @@ class RoomAPI:
 
                 # 每个时段
                 for time_range in date_status["applyTime"].split(","):
+                    t_start, t_end = (
+                        datetime.datetime.combine(dates[date_status["XQJ"] - 1], t)
+                        for t in parse_time_range(time_range)
+                    )
                     yield Booking(
                         room_name=room["CDMC"],
                         room_id=room["CDDM"],
-                        time=tuple(
-                            datetime.datetime.combine(dates[date_status["XQJ"] - 1], t)
-                            for t in parse_time_range(time_range)
-                        ),
+                        t_start=t_start,
+                        t_end=t_end,
                     )
 
     async def _fetch_bookings_page(
