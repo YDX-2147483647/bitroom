@@ -8,13 +8,16 @@ authors = [
 dependencies = [
     "PyExecJS>=1.5.1",
     "httpx>=0.24.0",
+    "click>=8.1.3",
+    "platformdirs>=3.5.0",
+    'tomli>=2.0.1; python_version < "3.11"',
 ]
 requires-python = ">=3.10"
 readme = "README.md"
 license = {text = "MIT"}
 
 [project.scripts]
-bitroom = "bitroom.__main__:main"
+bitroom = "bitroom.cli:cli"
 
 [build-system]
 requires = ["pdm-backend"]

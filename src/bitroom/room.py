@@ -4,8 +4,9 @@ import datetime
 from asyncio import gather
 from itertools import chain
 from json import dumps
+from dataclasses import dataclass
 from math import ceil
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Generator
@@ -52,13 +53,30 @@ def parse_time_range(time_range: str) -> tuple[datetime.time, datetime.time]:
     return tuple(datetime.time.fromisoformat(t) for t in parts)
 
 
-class Booking(TypedDict):
+def format_datetime_range(time: tuple[datetime.datetime, datetime.datetime]) -> str:
+    """格式化时间区间"""
+
+    if time[0].date() == time[1].date():
+        return (
+            time[0].isoformat(sep=" ", timespec="minutes")
+            + "–"
+            + time[1].time().isoformat(timespec="minutes")
+        )
+    else:
+        return "–".join(t.isoformat(sep=" ", timespec="minutes") for t in time)
+
+
+@dataclass
+class Booking:
     """可预约的时空区间"""
 
     room_name: str
     room_id: str
     time: tuple[datetime.datetime, datetime.datetime]
     """(开始时刻, 结束时刻)"""
+
+    def __str__(self) -> str:
+        return f"<Booking [{self.room_name}] {format_datetime_range(self.time)}>"
 
 
 class RoomAPI:
@@ -120,7 +138,7 @@ class RoomAPI:
                     }
                 )
             },
-            timeout=max(15, 10 * rooms_per_page),  # Yes, it's really slow…
+            timeout=max(20, 20 * rooms_per_page),  # Yes, it's really slow…
             follow_redirects=True,
         )
         res.raise_for_status()
