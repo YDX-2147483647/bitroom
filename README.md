@@ -22,6 +22,27 @@ Commands:
 ```
 
 ```shell
+$ pdm run bitroom show --help
+Usage: python -m bitroom show [OPTIONS]
+
+  显示所有可预约的时空区间
+
+  默认从 API 爬取，因服务器响应慢，大约需 10 s。
+
+      $ bitroom show
+
+  也可直接从 stdin 提供之前的结果。
+
+      $ bitroom show --json > ./bookings.json
+      $ cat ./bookings.json | bitroom show
+
+Options:
+  --json / --no-json  按 JSON 格式输出
+  --auth TEXT         认证信息，形如“1120771210:cyberpunk”（<学号>:<密码>）；不建议使用，请改用配置文件
+  --help              Show this message and exit.
+```
+
+```shell
 $ pdm run bitroom show
 <Booking [【睿信书院】静c-鸿远报告厅] 2023-05-07 16:00–16:45>
 <Booking [【睿信书院】静c-鸿远报告厅] 2023-05-07 19:20–20:05>
