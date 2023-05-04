@@ -20,6 +20,7 @@ jobs:
         with:
           python-version: 3.11.3
           cache: true
+      - run: pdm self list
       - name: Build distributions
         run: pdm build -v
       - name: Publish to PyPI
