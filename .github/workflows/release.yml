@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - v*
+  workflow_dispatch:
 
 jobs:
   pypi-publish:
@@ -20,6 +21,6 @@ jobs:
           python-version: 3.11
           cache: true
       - name: Build distributions
-        run: pdm build
+        run: pdm build -v
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
