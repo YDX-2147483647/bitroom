@@ -2,12 +2,45 @@
 
 BIT 场地预约查询接口。
 
-## 🧪 例子
+## 💥 源起
 
-（要先克隆仓库，[`pdm install`](https://pdm.fming.dev/latest/reference/cli/#install)）
+- [场地预约系统（桌面版）](http://stu.bit.edu.cn/xsfw/sys/cdyyapp/*default/index.do)的服务器响应太慢了，每次翻页都要十几秒。
+
+  若并发请求，再缓存到本地，会方便不少。
+
+- 房间资源是时空区间，需求常常是“先时间，后空间”；然而也许为方便调度资源、避免冲突，现有系统全都“先空间，后时间”。
+
+  例如，你可能会问：“明天下午还有没有房间？没有的话，后天下午也行。就几个人，也不需要投影。”
+
+  而很少专门针对某一房间问。
+
+bitroom 目前已解决登录、包装 API 等底层问题，可供后来者调用。
+
+```python
+from httpx import AsyncClient
+from bitroom import auth, RoomAPI
+
+async with AsyncClient() as client:
+    await auth(client, username, password)  # 登录“统一身份认证”
+
+    api = await RoomAPI.build(client)
+    bookings = await api.fetch_bookings(date.today())
+
+print(bookings)
+```
+
+当然也提供了基础的命令行接口。可结合 [fzf](https://github.com/junegunn/fzf/)，搜索日期、时间、房间。
 
 ```shell
-$ pdm run bitroom --help
+bitroom show | fzf
+```
+
+## 🧪 例子
+
+（要先`pipx install bitroom`）
+
+```shell
+$ bitroom --help
 Usage: python -m bitroom [OPTIONS] COMMAND [ARGS]...
 
   BIT 场地预约查询接口
@@ -22,7 +55,7 @@ Commands:
 ```
 
 ```shell
-$ pdm run bitroom show --help
+$ bitroom show --help
 Usage: python -m bitroom show [OPTIONS]
 
   显示所有可预约的时空区间
@@ -43,7 +76,7 @@ Options:
 ```
 
 ```shell
-$ pdm run bitroom show
+$ bitroom show
 <Booking [【睿信书院】静c-鸿远报告厅] 2023-05-07 16:00–16:45>
 <Booking [【睿信书院】静c-鸿远报告厅] 2023-05-07 19:20–20:05>
 <Booking [【精工书院】研讨室1] 2023-05-04 12:15–13:20>
@@ -57,7 +90,7 @@ $ pdm run bitroom show
 
 ## ⚙️ 配置
 
-编辑`config.toml`，写入学号、密码，用于登录场地预约系统。
+编辑`config.toml`，写入学号、密码，用于登录“统一身份认证”。
 
 ```toml
 # 仅作示例，非真实信息

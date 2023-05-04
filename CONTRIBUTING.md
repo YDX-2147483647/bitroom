@@ -1,6 +1,6 @@
 # 贡献者指南
 
-## 场地预约概况
+## ℹ️ 场地预约概况
 
 我校存在两套系统，[北京书院社区](https://i.bit.edu.cn/EIP/nonlogin/onewebsitehande/toPersonalCenterPage.htm)一套，其它一套。
 
@@ -13,3 +13,17 @@
 - [i北理移动版`swmcdyy`](http://stu.bit.edu.cn/xsfw/sys/swmcdyyapp/*default/index.do)：i北理 → 场地预约。
 
   这套系统只会显示每个场地“可预约/满预约”，单击进去后才显示具体时段。不过响应很快。
+
+## 🛠️ 开发
+
+使用 [pdm](https://pdm.fming.dev/) 辅助开发。
+
+```shell
+$ pdm install
+```
+
+```shell
+$ pipx install pre-commit  # Alternate: python -m pip install pre-commit
+$ pre-commit install
+$ pdm run lint
+```
