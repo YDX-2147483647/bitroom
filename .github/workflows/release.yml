@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - v*
+  workflow_dispatch:
 
 jobs:
   pypi-publish:
@@ -19,6 +20,8 @@ jobs:
         with:
           python-version: 3.11
           cache: true
+        env:
+          PDM_DEPS: 'urllib3<2'
       - name: Build distributions
         run: pdm build
       - name: Publish to PyPI
