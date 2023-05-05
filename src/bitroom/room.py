@@ -39,6 +39,8 @@ async def prepare_headers(client: AsyncClient) -> None:
 def parse_time_range(time_range: str) -> tuple[datetime.time, datetime.time]:
     """解释时间区间
 
+    `format_time_range`的逆。
+
     # 例子
 
     ```
@@ -53,8 +55,28 @@ def parse_time_range(time_range: str) -> tuple[datetime.time, datetime.time]:
     return tuple(datetime.time.fromisoformat(t) for t in parts)
 
 
+def format_time_range(time_range: tuple[datetime.time, datetime.time]) -> str:
+    """格式化时间区间
+
+    `parse_time_range`的逆。
+
+    # 例子
+
+    ```
+    from datetime import time
+
+    assert format_time_range((time(8, 0), time(8, 45))) == '08:00-08:45'
+    ```
+    """
+
+    return "-".join(t.isoformat(timespec="minutes") for t in time_range)
+
+
 def format_datetime_range(time: tuple[datetime.datetime, datetime.datetime]) -> str:
-    """格式化时间区间"""
+    """格式化时间区间
+
+    含日期。
+    """
 
     if time[0].date() == time[1].date():
         return (
@@ -110,6 +132,7 @@ class RoomAPI:
 
     api = await RoomAPI.build(client)
     bookings = await api.get_bookings(date.today())
+    await api.book(bookings[0], tel="13806491023", applicant="Boltzmann")
     ```
     """
 
@@ -185,12 +208,13 @@ class RoomAPI:
                 # 每个时段
                 for time_range in date_status["applyTime"].split(","):
                     t_start, t_end = (
+                        # XQJ = 星期几
                         datetime.datetime.combine(dates[date_status["XQJ"] - 1], t)
                         for t in parse_time_range(time_range)
                     )
                     yield Booking(
-                        room_name=room["CDMC"],
-                        room_id=room["CDDM"],
+                        room_name=room["CDMC"],  # 场地名称
+                        room_id=room["CDDM"],  # 场地代码
                         t_start=t_start,
                         t_end=t_end,
                     )
@@ -255,3 +279,64 @@ class RoomAPI:
 
         # Flatten
         return list(chain.from_iterable(bookings_set))
+
+    async def book(
+        self,
+        booking: Booking | list[Booking],
+        *,
+        tel: str,
+        applicant: str,
+        description: str | None = None,
+        remark: str | None = None,
+    ) -> None:
+        """预约
+
+        :param booking: 要预约的时空区间，可多个，但必须同一天、同一房间
+        :param tel: 联系电话
+        :param applicant: 申请人姓名
+        :param description: 申请陈述
+        :param remark: 备注
+        """
+
+        bookings = booking if isinstance(booking, list) else [booking]
+        assert all(
+            b.room_id == bookings[0].room_id
+            and b.t_start.date() == bookings[0].t_start.date()
+            for b in bookings
+        ), f"预约必须不是同一天、同一房间，请分多次预约：{bookings}"
+
+        res = await self._post(
+            "/xsfw/sys/cdyyapp/modules/CdyyApplyController/saveReserveSite.do",
+            data={
+                # 场地代码-显示
+                "CDDM_DISPLAY": bookings[0].room_name,
+                # 场地代码
+                "CDDM": bookings[0].room_id,
+                # 预约日期
+                "YYRQ": bookings[0].t_start.date().isoformat(),
+                # 使用时段
+                "SYSD": ",".join(
+                    format_time_range((b.t_start.time(), b.t_end.time()))
+                    for b in bookings
+                ),
+                # 申请陈述
+                "SQCS": description or "",
+                # 备注
+                "BZ": remark or "",
+                # 联系电话
+                "LXDH": tel,
+                # 申请人姓名
+                "SQRXM": applicant,
+                # 单位代码（无用）
+                "DWDM": "299792458",  # 光在真空中的速率（m/s）
+                # 申请编码（无用）
+                "SQBM": "",
+                # 审核状态（无用）
+                "SHZT": "90",
+            },
+        )
+
+        res.raise_for_status()
+        json = res.json()
+        # 似乎服务端没验证，永远成功
+        assert json["code"] == "0" and json["msg"] == "成功"

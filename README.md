@@ -21,6 +21,7 @@ BIT 场地预约查询接口。
 bitroom 目前已解决登录、包装 API 等底层问题，可供后来者调用。
 
 ```python
+from datetime import date
 from httpx import AsyncClient
 from bitroom import auth, RoomAPI
 
@@ -29,8 +30,15 @@ async with AsyncClient() as client:
 
     api = await RoomAPI.build(client)
     bookings = await api.fetch_bookings(date.today())
+    print(bookings[0])
 
-print(bookings)
+    await api.book(
+        bookings[0],
+        tel="13806491023",
+        applicant="Boltzmann",
+        description="Boltzmann 常数是气体的内能与温度的一种比例系数。",
+        remark="一般记作 k_B 或 k。",
+    )
 ```
 
 当然也提供了基础的命令行接口。可结合 [fzf](https://github.com/junegunn/fzf/)，搜索日期、时间、房间。
