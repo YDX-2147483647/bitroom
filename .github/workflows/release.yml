@@ -18,9 +18,10 @@ jobs:
       - name: Setup pdm
         uses: pdm-project/setup-pdm@v3
         with:
-          python-version: 3.11.3
+          python-version: 3.11
           cache: true
-      - run: pdm self list
+        env:
+          PDM_DEPS: 'urllib3<2'
       - name: Build distributions
         run: pdm build -v
       - name: Publish to PyPI
