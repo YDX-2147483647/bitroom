@@ -9,7 +9,7 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Generator
+    from typing import Any, Generator, Mapping
 
     from httpx import AsyncClient, Response
 
@@ -131,13 +131,16 @@ class RoomAPI:
 
         self._client = client
 
-    async def _post(self, url_path: str, **kwargs) -> Response:
+    async def _post(
+        self, url_path: str, data: Mapping[str, Any] | None = None, **kwargs
+    ) -> Response:
         return await self._client.post(
             f"{API_BASE}{url_path}",
+            data={"data": dumps(data)},
             **kwargs,
         )
 
-    async def _fetch_data(
+    async def _fetch_bookings_data(
         self, date: datetime.date, page: int, *, rooms_per_page: int
     ) -> dict:
         """Get a page of data
@@ -150,14 +153,10 @@ class RoomAPI:
         res = await self._post(
             "/xsfw/sys/cdyyapp/modules/CdyyApplyController/getSiteInfo.do",
             data={
-                "data": dumps(
-                    {
-                        # 预约日期
-                        "YYRQ": date.isoformat(),
-                        "pageNumber": page + 1,
-                        "pageSize": rooms_per_page,
-                    }
-                )
+                # 预约日期
+                "YYRQ": date.isoformat(),
+                "pageNumber": page + 1,
+                "pageSize": rooms_per_page,
             },
             timeout=max(20, 20 * rooms_per_page),  # Yes, it's really slow…
             follow_redirects=True,
@@ -168,7 +167,7 @@ class RoomAPI:
 
         return json["data"]
 
-    def _parse_data(
+    def _parse_bookings_data(
         self, data: dict, *, dates: list[datetime.date]
     ) -> Generator[Booking, None, None]:
         """Parse a page of data to bookings
@@ -212,8 +211,10 @@ class RoomAPI:
         :param dates: 涉及的日期，周一–周日
         """
 
-        data = await self._fetch_data(date, page=page, rooms_per_page=rooms_per_page)
-        return list(self._parse_data(data, dates=dates))
+        data = await self._fetch_bookings_data(
+            date, page=page, rooms_per_page=rooms_per_page
+        )
+        return list(self._parse_bookings_data(data, dates=dates))
 
     async def fetch_bookings(
         self, date: datetime.date, *, rooms_per_page=3
@@ -233,7 +234,7 @@ class RoomAPI:
 
         # 首先试探，取得基本数据
         # 只获取一项响应更快
-        sniff_data = await self._fetch_data(date, page=0, rooms_per_page=1)
+        sniff_data = await self._fetch_bookings_data(date, page=0, rooms_per_page=1)
 
         dates = [date.fromisoformat(it["WEEKDATE"]) for it in sniff_data["weekList"]]
         """此次查询涉及的日期，周一–周日"""

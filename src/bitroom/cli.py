@@ -39,7 +39,7 @@ async def _show(config: Config) -> list[Booking]:
     type=str,
     help="认证信息，形如“1120771210:cyberpunk”（<学号>:<密码>）；不建议使用，请改用配置文件",
 )
-def show(json: bool, auth: str | None):
+def show(json: bool, auth: str | None) -> None:
     """显示所有可预约的时空区间
 
     默认从 API 爬取，因服务器响应慢，大约需 10 s。
