@@ -241,13 +241,21 @@ class RoomAPI:
         return list(self._parse_bookings_data(data, dates=dates))
 
     async def fetch_bookings(
-        self, date: datetime.date, *, rooms_per_page=3
+        self,
+        date: datetime.date,
+        *,
+        rooms_per_page=3,
+        n_weeks=2,
     ) -> list[Booking]:
         """获取可预约的时空区间
 
         :param date: 日期
         :param rooms_per_page: 访问 API 时每页房间数量
-        :yield: 相邻一周（周一–周日）可预约的时空区间
+        :param n_weeks: 获取的时间范围，1 代表只获取相邻一周，2 代表相邻一周和再下一周
+        :yield: 相邻几周可预约的时空区间
+
+        “相邻一周”指周一–周日。
+        例如假设5月1日为周一，查询 5月5日，则会返回5月1–7日的情况。
 
         # 玄学
 
@@ -261,21 +269,31 @@ class RoomAPI:
         sniff_data = await self._fetch_bookings_data(date, page=0, rooms_per_page=1)
 
         dates = [date.fromisoformat(it["WEEKDATE"]) for it in sniff_data["weekList"]]
-        """此次查询涉及的日期，周一–周日"""
+        """此次查询相邻一周的日期，周一–周日"""
 
         n_rooms = int(sniff_data["siteInfoList"][0]["totalCount"])
         n_pages = ceil(n_rooms / rooms_per_page)
 
         # 然后获取所有数据
-        # 每一页的结果
-        bookings_set = await gather(
-            *(
+        fetch_plans = []
+        # 每一周
+        for w in range(n_weeks):
+            shift = datetime.timedelta(weeks=w)
+            shifted_date = date + shift
+            shifted_dates = [d + shift for d in dates]
+
+            fetch_plans.extend(
                 self._fetch_bookings_page(
-                    page=p, date=date, rooms_per_page=rooms_per_page, dates=dates
+                    page=p,
+                    date=shifted_date,
+                    rooms_per_page=rooms_per_page,
+                    dates=shifted_dates,
                 )
                 for p in range(n_pages)
             )
-        )
+
+        # 每一页的结果
+        bookings_set = await gather(*fetch_plans)
 
         # Flatten
         return list(chain.from_iterable(bookings_set))
