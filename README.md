@@ -20,6 +20,12 @@ BIT 场地预约查询接口。
 
 bitroom 目前已解决登录、包装 API 等底层问题，可供后来者调用。
 
+## 🧪 例子
+
+### 🤖编程 API
+
+这是主要支持的接口。
+
 ```python
 from datetime import date
 from httpx import AsyncClient
@@ -41,13 +47,19 @@ async with AsyncClient() as client:
     )
 ```
 
-当然也提供了基础的命令行接口。可结合 [fzf](https://github.com/junegunn/fzf/)，搜索日期、时间、房间。
+### ⌨️命令行 CLI
+
+也提供了基础的命令行接口，支持查询，不支持预约。
+
+可结合 [fzf](https://github.com/junegunn/fzf/)，搜索日期、时间、房间。（详见 [wiki](https://github.com/YDX-2147483647/bitroom/wiki#-fzf-%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B)）
 
 ```shell
-bitroom show | fzf
+$ bitroom show | fzf
 ```
 
-## 🧪 例子
+![](https://user-images.githubusercontent.com/73375426/236676121-0bb3f80a-4ef0-4b06-bb03-d41a6f42fe38.png)
+
+详细帮助如下。
 
 （要先`pipx install bitroom`）
 
@@ -100,7 +112,21 @@ $ bitroom show
 ……
 ```
 
+### 🎨图形终端 TUI
+
+目前还在早期测试阶段，仅仅能用而已。支持查询、搜索、预约。
+
+```shell
+$ pipx install bitroom[tui]
+```
+
+![RoomApp](https://github.com/YDX-2147483647/bitroom/assets/73375426/3ad4e0fd-dfb5-43ad-a07d-70b70b6242fa)
+
+![BookSceen](https://github.com/YDX-2147483647/bitroom/assets/73375426/18a824ce-f963-4f30-b0cb-b26a0f1583b2)
+
 ## ⚙️ 配置
+
+（仅用于 CLI、TUI）
 
 编辑`config.toml`，写入学号、密码，用于登录“统一身份认证”。
 
