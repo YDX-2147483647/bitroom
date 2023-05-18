@@ -122,6 +122,25 @@ class Booking:
         return Booking(**raw)
 
 
+@dataclass
+class Order(Booking):
+    """已预约的时空区间"""
+
+    applicant: str
+    """预约人姓名"""
+    tel: str
+    """联系电话"""
+    description: str
+    """申请陈述"""
+
+    def __str__(self) -> str:
+        return (
+            f"<Order [{self.room_name}] "
+            f"{format_datetime_range((self.t_start,self.t_end))} "
+            f"“{self.applicant}” ({self.tel}): “{self.description}”>"
+        )
+
+
 class RoomAPI:
     """场地预约 API 包装
 
@@ -187,7 +206,9 @@ class RoomAPI:
         )
         res.raise_for_status()
         json = res.json()
-        assert json["code"] == "0" and json["msg"] == "成功"
+        assert (
+            json["code"] == "0" and json["msg"] == "成功"
+        ), f"Fetching bookings data failed with {json['code']} “{json['msg']}”."
 
         return json["data"]
 
@@ -362,4 +383,44 @@ class RoomAPI:
         res.raise_for_status()
         json = res.json()
         # 似乎服务端没验证，永远成功
-        assert json["code"] == "0" and json["msg"] == "成功"
+        assert (
+            json["code"] == "0" and json["msg"] == "成功"
+        ), f"Booking failed with {json['code']} “{json['msg']}”."
+
+    async def fetch_orders(self, room_id: str, date: datetime.date) -> list[Order]:
+        """获取已预约的时空区间
+
+        :param room_id:
+        :param date: 日期
+        """
+
+        res = await self._post(
+            "/xsfw/sys/cdyyapp/modules/kyycd/cdsyqkcx.do",
+            data={
+                "CDDM": room_id,  # 场地代码
+                "YYRQ": date.isoformat(),  # 预约日期
+            },
+        )
+        res.raise_for_status()
+        json = res.json()
+        assert json["code"] == "0", f"Fetching orders failed with {json['code']}."
+
+        orders = []
+        for row in json["data" "s"]["cdsyqkcx"]["rows"]:
+            date_str, time_str = row["SYRQ"].split()  # 使用日期
+            date = datetime.date.fromisoformat(date_str)
+            t_start, t_end = parse_time_range(time_str)
+
+            orders.append(
+                Order(
+                    # todo: room name
+                    room_name="<unknown>",
+                    room_id=room_id,
+                    applicant=row["SQRXM"],  # 申请人姓名
+                    tel=row["LXDH"],  # 联系电话
+                    description=row["SQCS"],  # 申请陈述
+                    t_start=datetime.datetime.combine(date, t_start),
+                    t_end=datetime.datetime.combine(date, t_end),
+                )
+            )
+        return orders

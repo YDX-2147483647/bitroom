@@ -33,11 +33,13 @@ from bitroom import auth, RoomAPI
 
 async with AsyncClient() as client:
     await auth(client, username, password)  # 登录“统一身份认证”
-
     api = await RoomAPI.build(client)
+
+    # 获取“可预约”的时空区间
     bookings = await api.fetch_bookings(date.today())
     print(bookings[0])
 
+    # 预约
     await api.book(
         bookings[0],
         tel="13806491023",
@@ -45,6 +47,10 @@ async with AsyncClient() as client:
         description="Boltzmann 常数是气体的内能与温度的一种比例系数。",
         remark="一般记作 k_B 或 k。",
     )
+
+    # 获取“已预约”的时空区间
+    orders = await api.fetch_orders(bookings[0].room_id, date.today())
+    print(orders[0])
 ```
 
 ### ⌨️命令行 CLI
