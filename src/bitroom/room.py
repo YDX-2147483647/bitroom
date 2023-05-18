@@ -9,7 +9,7 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any, Generator, Mapping
+    from typing import Generator
 
     from httpx import AsyncClient, Response
 
@@ -154,12 +154,9 @@ class RoomAPI:
 
         self._client = client
 
-    async def _post(
-        self, url_path: str, data: Mapping[str, Any] | None = None, **kwargs
-    ) -> Response:
+    async def _post(self, url_path: str, **kwargs) -> Response:
         return await self._client.post(
             f"{API_BASE}{url_path}",
-            data={"data": dumps(data)},
             **kwargs,
         )
 
@@ -176,10 +173,14 @@ class RoomAPI:
         res = await self._post(
             "/xsfw/sys/cdyyapp/modules/CdyyApplyController/getSiteInfo.do",
             data={
-                # 预约日期
-                "YYRQ": date.isoformat(),
-                "pageNumber": page + 1,
-                "pageSize": rooms_per_page,
+                "data": dumps(
+                    {
+                        # 预约日期
+                        "YYRQ": date.isoformat(),
+                        "pageNumber": page + 1,
+                        "pageSize": rooms_per_page,
+                    }
+                )
             },
             timeout=max(20, 20 * rooms_per_page),  # Yes, it's really slow…
             follow_redirects=True,
@@ -326,31 +327,35 @@ class RoomAPI:
         res = await self._post(
             "/xsfw/sys/cdyyapp/modules/CdyyApplyController/saveReserveSite.do",
             data={
-                # 场地代码-显示
-                "CDDM_DISPLAY": bookings[0].room_name,
-                # 场地代码
-                "CDDM": bookings[0].room_id,
-                # 预约日期
-                "YYRQ": bookings[0].t_start.date().isoformat(),
-                # 使用时段
-                "SYSD": ",".join(
-                    format_time_range((b.t_start.time(), b.t_end.time()))
-                    for b in bookings
-                ),
-                # 申请陈述
-                "SQCS": description or "",
-                # 备注
-                "BZ": remark or "",
-                # 联系电话
-                "LXDH": tel,
-                # 申请人姓名
-                "SQRXM": applicant,
-                # 单位代码（无用）
-                "DWDM": "299792458",  # 光在真空中的速率（m/s）
-                # 申请编码（无用）
-                "SQBM": "",
-                # 审核状态（无用）
-                "SHZT": "90",
+                "data": dumps(
+                    {
+                        # 场地代码-显示
+                        "CDDM_DISPLAY": bookings[0].room_name,
+                        # 场地代码
+                        "CDDM": bookings[0].room_id,
+                        # 预约日期
+                        "YYRQ": bookings[0].t_start.date().isoformat(),
+                        # 使用时段
+                        "SYSD": ",".join(
+                            format_time_range((b.t_start.time(), b.t_end.time()))
+                            for b in bookings
+                        ),
+                        # 申请陈述
+                        "SQCS": description or "",
+                        # 备注
+                        "BZ": remark or "",
+                        # 联系电话
+                        "LXDH": tel,
+                        # 申请人姓名
+                        "SQRXM": applicant,
+                        # 单位代码（无用）
+                        "DWDM": "299792458",  # 光在真空中的速率（m/s）
+                        # 申请编码（无用）
+                        "SQBM": "",
+                        # 审核状态（无用）
+                        "SHZT": "90",
+                    }
+                )
             },
         )
 
