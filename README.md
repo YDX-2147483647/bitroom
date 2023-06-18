@@ -128,7 +128,7 @@ $ pipx install bitroom[tui]
 
 ![RoomApp](https://github.com/YDX-2147483647/bitroom/assets/73375426/3ad4e0fd-dfb5-43ad-a07d-70b70b6242fa)
 
-![BookSceen](https://github.com/YDX-2147483647/bitroom/assets/73375426/18a824ce-f963-4f30-b0cb-b26a0f1583b2)
+![BookScene](https://github.com/YDX-2147483647/bitroom/assets/73375426/18a824ce-f963-4f30-b0cb-b26a0f1583b2)
 
 ## ⚙️ 配置
 
