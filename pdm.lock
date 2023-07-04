@@ -231,27 +231,27 @@ summary = "Sniff out which async library your code is running under"
 
 [[package]]
 name = "textual"
-version = "0.23.0"
+version = "0.29.0"
 requires_python = ">=3.7,<4.0"
 summary = "Modern Text User Interface framework"
 dependencies = [
     "importlib-metadata>=4.11.3",
-    "markdown-it-py[linkify,plugins]<3.0.0,>=2.1.0",
+    "markdown-it-py[linkify,plugins]>=2.1.0",
     "rich>=13.3.3",
     "typing-extensions<5.0.0,>=4.4.0",
 ]
 
 [[package]]
-name = "textual"
-version = "0.23.0"
-extras = ["dev"]
+name = "textual-dev"
+version = "1.0.1"
 requires_python = ">=3.7,<4.0"
-summary = "Modern Text User Interface framework"
+summary = "Development tools for working with Textual"
 dependencies = [
     "aiohttp>=3.8.1",
     "click>=8.1.2",
     "msgpack>=1.0.3",
-    "textual==0.23.0",
+    "textual>=0.29.0",
+    "typing-extensions<5.0.0,>=4.4.0",
 ]
 
 [[package]]
@@ -290,8 +290,9 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "4.2"
+cross_platform = true
 groups = ["default", "dev", "tui"]
-content_hash = "sha256:f859f89758862164c72fecd48c473b29ea54463607563ce5c90e0f524585945d"
+content_hash = "sha256:3a69b80a330f41cb774c56445d39c63431dbc8e6d1ec8e9d6b0310a9c3b7755f"
 
 [metadata.files]
 "aiohttp 3.8.4" = [
@@ -768,9 +769,13 @@ content_hash = "sha256:f859f89758862164c72fecd48c473b29ea54463607563ce5c90e0f524
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/c3/a0/5dba8ed157b0136607c7f2151db695885606968d1fae123dc3391e0cfdbf/sniffio-1.3.0-py3-none-any.whl", hash = "sha256:eecefdce1e5bbfb7ad2eeaabf7c1eeb404d7757c379bd1f7e5cce9d8bf425384"},
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/cd/50/d49c388cae4ec10e8109b1b833fd265511840706808576df3ada99ecb0ac/sniffio-1.3.0.tar.gz", hash = "sha256:e60305c5e5d314f5389259b7f22aaa33d8f7dee49763119234af3755c55b9101"},
 ]
-"textual 0.23.0" = [
-    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/49/4f/37c3fad901cbe657f174cf3974d5c24d957930c69e93210d91f9e39afc03/textual-0.23.0.tar.gz", hash = "sha256:f3e08d7afaf6c8562d2d5d6230fa891b515ebf9813cda4ea1807a639032edbd4"},
-    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/a4/d4/f60eeda8365e98eca5281c747305b462783831fade9b2ce376fb6d8cdaff/textual-0.23.0-py3-none-any.whl", hash = "sha256:9eb1284ae312801b12b19668bf84faa2ae226a2ab6269e5f84edff851f2ad371"},
+"textual 0.29.0" = [
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/28/1c/4d301eff65948a444ea83261dea5497995373b557c6ef4d6eb159e185c01/textual-0.29.0-py3-none-any.whl", hash = "sha256:949fd8f16a412404ba785605dda1e2fab8166656e4d29d4177ec63cd73ba83d4"},
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/7d/38/ab2589259690dbbf035845db73d621219cb6fada117ef75cdd7d3973bf26/textual-0.29.0.tar.gz", hash = "sha256:7eb87b6d007dc9bd08e00e893b860ecb7a11ca815c8866db39fe17ec547e2fcf"},
+]
+"textual-dev 1.0.1" = [
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/0c/df/d29d8b9309159aaadc6e9d8158c8cce79ec8bdbd524d03af7dcad9d69f17/textual_dev-1.0.1-py3-none-any.whl", hash = "sha256:419fc426c120f04f89ab0cb1aa88f7873dd7cdb9c21618e709175c8eaff6b566"},
+    {url = "https://pypi.tuna.tsinghua.edu.cn/packages/14/22/4a7f77f28f62d17c7a6dd9e0537f0e78c3fe42eb5a18e0ad2ad3245d5626/textual_dev-1.0.1.tar.gz", hash = "sha256:9f4c40655cbb56af7ee92805ef14fa24ae98ff8b0ae778c59de7222f1caa7281"},
 ]
 "tomli 2.0.1" = [
     {url = "https://pypi.tuna.tsinghua.edu.cn/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},

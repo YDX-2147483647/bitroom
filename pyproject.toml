@@ -64,7 +64,7 @@ ignore-init-module-imports = true
 [tool.pdm]
 [tool.pdm.dev-dependencies]
 dev = [
-    "textual[dev]>=0.23.0",
+    "textual-dev>=1.0.1",
 ]
 
 [tool.pdm.scripts]
